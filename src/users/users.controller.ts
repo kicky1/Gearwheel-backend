@@ -9,6 +9,8 @@ import {
   Delete,
   ParseIntPipe,
   UseGuards,
+  ClassSerializerInterceptor,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -36,10 +38,11 @@ export class UsersController {
   @Get()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
+  @UseInterceptors(ClassSerializerInterceptor)
   @ApiOkResponse({ type: UserEntity, isArray: true })
   async findAll() {
     const users = await this.usersService.findAll();
-    return users.map((user) => user);
+    return users.map((user) => new UserEntity(user));
   }
 
   @Get(':id')
@@ -47,7 +50,7 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOkResponse({ type: UserEntity })
   async findOne(@Param('id', ParseIntPipe) id: number) {
-    return await this.usersService.findOne(id);
+    return new UserEntity(await this.usersService.findOne(id) as Partial<UserEntity>);
   }
 
   @Patch(':id')
@@ -58,13 +61,13 @@ export class UsersController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    return await this.usersService.update(id, updateUserDto);
+    return new UserEntity(await this.usersService.update(id, updateUserDto));
   }
 
   @Delete(':id')
   @ApiBearerAuth()
   @ApiOkResponse({ type: UserEntity })
   async remove(@Param('id', ParseIntPipe) id: number) {
-    return await this.usersService.remove(id);
+    return new UserEntity(await this.usersService.remove(id));
   }
 }
